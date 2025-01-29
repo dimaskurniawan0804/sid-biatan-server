@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id         Int        @id @default(autoincrement())
+  uuid       String     @unique
+  username   String
+  password   String
+  status     Boolean
+  // avatar is not required
+  avatar     String?
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  feeds      feeds[]
+  comments   comments[]
+}
+
+model feeds {
+  id            Int        @id @default(autoincrement())
+  uuid          String     @unique
+  name          String
+  budget        String
+  budget_source String
+  description   String?
+  likes         Int?
+  organaizer    String
+  user_id       Int
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  user          users      @relation(fields: [user_id], references: [id])
+  images        files[]
+  comments      comments[]
+}
+
+model files {
+  id         Int      @id @default(autoincrement())
+  file_url   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  feed_id    Int
+  feed       feeds    @relation(fields: [feed_id], references: [id])
+}
+
+model comments {
+  id          Int      @id @default(autoincrement())
+  username    String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  feed_id     Int
+  feed        feeds    @relation(fields: [feed_id], references: [id])
+  user_id     Int
+  user        users    @relation(fields: [user_id], references: [id])
+}
