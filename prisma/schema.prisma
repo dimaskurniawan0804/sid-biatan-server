@@ -25,6 +25,8 @@ model users {
   updated_at DateTime   @updatedAt
   feeds      feeds[]
   comments   comments[]
+  roles      roles?     @relation(fields: [rolesId], references: [id])
+  rolesId    Int?
 }
 
 model feeds {
@@ -63,4 +65,18 @@ model comments {
   feed        feeds    @relation(fields: [feed_id], references: [id])
   user_id     Int
   user        users    @relation(fields: [user_id], references: [id])
+}
+
+model roles {
+  id         Int      @id @default(autoincrement())
+  name       Role
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  users      users[]
+}
+
+enum Role {
+  ADMIN
+  USER
+  GUEST
 }
