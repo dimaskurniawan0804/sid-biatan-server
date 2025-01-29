@@ -16,10 +16,9 @@ datasource db {
 model users {
   id         Int        @id @default(autoincrement())
   uuid       String     @unique
-  username   String
+  username   String     @unique
   password   String
   status     Boolean
-  // avatar is not required
   avatar     String?
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
@@ -36,11 +35,12 @@ model feeds {
   budget        String
   budget_source String
   description   String?
+  location      String?
   likes         Int?
-  organaizer    String
+  organaizer    String?
   user_id       Int
   created_at    DateTime   @default(now())
-  updated_at    DateTime   @updatedAt
+  updated_at    DateTime   @default(now())
   user          users      @relation(fields: [user_id], references: [id])
   images        files[]
   comments      comments[]
@@ -48,19 +48,18 @@ model feeds {
 
 model files {
   id         Int      @id @default(autoincrement())
-  file_url   String
+  file_url   String   @unique
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
   feed_id    Int
   feed       feeds    @relation(fields: [feed_id], references: [id])
 }
 
 model comments {
   id          Int      @id @default(autoincrement())
-  username    String
   description String
   created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  updated_at  DateTime @default(now())
   feed_id     Int
   feed        feeds    @relation(fields: [feed_id], references: [id])
   user_id     Int
@@ -69,14 +68,14 @@ model comments {
 
 model roles {
   id         Int      @id @default(autoincrement())
-  name       Role
+  name       String
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
   users      users[]
 }
 
-enum Role {
-  ADMIN
-  USER
-  GUEST
-}
+// enum Role {
+//   ADMIN
+//   USER
+//   GUEST
+// }
