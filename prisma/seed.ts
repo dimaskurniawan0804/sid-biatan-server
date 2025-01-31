@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-
+import { v4 as uuidv4 } from 'uuid';
+import { hash } from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -16,6 +17,18 @@ async function main() {
           name: 'guest',
         },
       ],
+    });
+
+    const pass = await hash('admin', 12);
+
+    await prisma.users.create({
+      data: {
+        username: 'admin',
+        uuid: uuidv4(),
+        password: pass,
+        role_id: 1,
+        status: true,
+      },
     });
   } catch (error) {
     // Log any errors that occur during the process

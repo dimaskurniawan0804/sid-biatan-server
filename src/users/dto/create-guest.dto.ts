@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
-export class CreateUserDto {
+export class CreateGUestDto {
   @IsNotEmpty()
   @IsString()
   username: string;
@@ -8,6 +8,4 @@ export class CreateUserDto {
   @MinLength(6)
   @MaxLength(20)
   password: string;
-  @IsNotEmpty()
-  role_id: string | number;
 }

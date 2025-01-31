@@ -24,8 +24,8 @@ model users {
   updated_at DateTime   @updatedAt
   feeds      feeds[]
   comments   comments[]
-  roles      roles?     @relation(fields: [rolesId], references: [id])
-  rolesId    Int?
+  roles      roles?     @relation(fields: [role_id], references: [id])
+  role_id    Int?
 }
 
 model feeds {
