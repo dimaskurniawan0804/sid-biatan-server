@@ -8,6 +8,5 @@ export class CreateUserDto {
   @MinLength(6)
   @MaxLength(20)
   password: string;
-  @IsNotEmpty()
   role_id: string | number;
 }

@@ -31,7 +31,7 @@ model users {
 model feeds {
   id            Int        @id @default(autoincrement())
   uuid          String     @unique
-  name          String
+  name          String     @unique
   budget        String
   budget_source String
   description   String?
@@ -39,6 +39,7 @@ model feeds {
   likes         Int?
   organaizer    String?
   user_id       Int
+  status        Boolean
   created_at    DateTime   @default(now())
   updated_at    DateTime   @default(now())
   user          users      @relation(fields: [user_id], references: [id])

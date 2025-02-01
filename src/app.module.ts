@@ -5,8 +5,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { LocalOnlyMiddleware } from './middleware/consumer.middleware';
+import { FeedsModule } from './feeds/feeds.module';
+import { FilesModule } from './files/files.module';
 @Module({
-  imports: [PrismaModule, UsersModule],
+  imports: [PrismaModule, UsersModule, FeedsModule, FilesModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,13 +1,13 @@
 import {
   Controller,
-  Get,
+  // Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
+  // Patch,
+  // Param,
+  // Delete,
   UseGuards,
-  Req,
+  // Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,10 +18,14 @@ import { LoginDTO } from './dto/login-dto';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-  @UseGuards(new UserGuard())
+  @UseGuards(new UserGuard([1]))
   @Post('/apparatus')
   createUser(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
+    const dto = {
+      ...createUserDto,
+      role_id: 2,
+    };
+    return this.usersService.createUser(dto);
   }
 
   @Post('/guest')
