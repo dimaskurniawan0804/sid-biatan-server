@@ -5,10 +5,6 @@ export class CreateFeedDto {
   name: string;
   @IsNotEmpty()
   @IsString()
-  budget: string;
-  @IsNotEmpty()
-  @IsString()
-  budget_source: string;
   description: string;
   location: string;
   organaizer: string;

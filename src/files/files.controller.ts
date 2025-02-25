@@ -2,22 +2,21 @@ import {
   Controller,
   // Get,
   Post,
-  Body,
+  // Body,
   UseGuards,
   UseInterceptors,
   Req,
-  UploadedFile,
-  Param,
-  Patch,
+  // UploadedFile,
+  // Param,
+  // Patch,
   UploadedFiles,
   // Patch,
   // Param,
   // Delete,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
-import { CreateFileDto } from './dto/create-file.dto';
 import { UserGuard } from 'src/middleware/users.guard';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -28,17 +27,16 @@ export class FilesController {
   @UseGuards(new UserGuard())
   @UseInterceptors(
     FilesInterceptor('files', 10, {
-      // 'files' should match the field name in FormData
       storage: diskStorage({
         destination:
           '/Users/dimaskurniawan/Documents/alek/multer-files/sid-biatan', // Development
-        // destination: '/www/wwwroot/upload', // VPS
+        // destination: '/www/wwwroot/uploads', // VPS
         filename: (req, file, cb) => {
           try {
             const now = new Date();
-            const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000) // Convert UTC to GMT+7
+            const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
               .toISOString()
-              .replace('Z', '+07:00'); // Keep ISO format with GMT+7
+              .replace('Z', '+07:00');
 
             const sanitizedOriginalName = file.originalname.replace(
               /[^a-zA-Z0-9.]/g,
@@ -56,10 +54,43 @@ export class FilesController {
   )
   @Post()
   async uploadFile(@Req() req, @UploadedFiles() files: Express.Multer.File[]) {
-    return {
-      message: 'UPLOAD SUCCESS',
-      filenames: files.map((file) => file.filename),
-    };
+    return this.filesService.create(files, req.body.feed_id);
+  }
+
+  @UseGuards(new UserGuard())
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: diskStorage({
+        destination:
+          '/Users/dimaskurniawan/Documents/alek/multer-files/sid-biatan', // Development
+        // destination: '/www/wwwroot/uploads', // VPS
+        filename: (req, file, cb) => {
+          try {
+            const now = new Date();
+            const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
+              .toISOString()
+              .replace('Z', '+07:00');
+
+            const sanitizedOriginalName = file.originalname.replace(
+              /[^a-zA-Z0-9.]/g,
+              '_',
+            ); // Remove special chars
+
+            const filename = `nota*${uuidv4()}*${jakartaTime}*${sanitizedOriginalName}`;
+            cb(null, filename);
+          } catch (error) {
+            cb(error, '');
+          }
+        },
+      }),
+    }),
+  )
+  @Post('/nota')
+  async uploadFileNota(
+    @Req() req,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.filesService.createNota(files, req.body.feed_id);
   }
 
   // @Post()

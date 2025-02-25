@@ -29,29 +29,28 @@ model users {
 }
 
 model feeds {
-  id            Int        @id @default(autoincrement())
-  uuid          String     @unique
-  name          String     @unique
-  budget        String
-  budget_source String
-  description   String?
-  location      String?
-  likes         Int?
-  organaizer    String?
-  user_id       Int
-  status        Boolean
-  created_at    DateTime   @default(now())
-  updated_at    DateTime   @default(now())
-  user          users      @relation(fields: [user_id], references: [id])
-  images        files[]
-  comments      comments[]
+  id          Int        @id @default(autoincrement())
+  uuid        String     @unique
+  name        String     @unique
+  description String?    @db.Text
+  location    String?
+  likes       Int?
+  organaizer  String?
+  user_id     Int
+  status      Boolean
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @default(now())
+  user        users      @relation(fields: [user_id], references: [id])
+  files       files[]
+  comments    comments[]
 }
 
 model files {
   id         Int      @id @default(autoincrement())
-  file_url   String   @unique
+  file_name  String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
+  nota       Boolean? @default(false)
   feed_id    Int
   feed       feeds    @relation(fields: [feed_id], references: [id])
 }

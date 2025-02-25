@@ -7,10 +7,11 @@ import { MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { LocalOnlyMiddleware } from './middleware/consumer.middleware';
 import { FeedsModule } from './feeds/feeds.module';
 import { FilesModule } from './files/files.module';
+import { SanitizerService } from './sanitizer/sanitizer.service';
 @Module({
   imports: [PrismaModule, UsersModule, FeedsModule, FilesModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SanitizerService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

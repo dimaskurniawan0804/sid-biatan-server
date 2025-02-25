@@ -7,8 +7,10 @@ export class LocalOnlyMiddleware implements NestMiddleware {
     const allowedHosts = ['localhost']; // Add your domain here
     const hostname = req.hostname;
 
-    if (!allowedHosts.includes(hostname)) {
-      return res.status(403).send('Access denied');
+    if (process.env.NODE_ENV === 'development') {
+      if (!allowedHosts.includes(hostname)) {
+        return res.status(403).send('Access denied');
+      }
     }
 
     next();
