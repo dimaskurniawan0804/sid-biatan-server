@@ -56,6 +56,7 @@ export class FeedsService {
     }
   }
 
+  // use for main page
   async findAllFeeds(size: number, page: number) {
     try {
       const feeds = await this.prisma.feeds.findMany({
@@ -68,17 +69,68 @@ export class FeedsService {
           created_at: 'desc',
         },
         select: {
-          id: true,
           uuid: true,
+          name: true,
+          description: true,
+          likes: true,
+          location: true,
           user: {
             select: {
-              id: true,
-              uuid: true,
               username: true,
+              avatar: true,
             },
           },
-          created_at: true,
-          updated_at: true,
+          files: {
+            where: {
+              nota: false,
+            },
+            select: {
+              file_name: true,
+            },
+          },
+        },
+      });
+      return {
+        status: 200,
+        data: feeds,
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
+
+  // find all feeds by user_id
+  // use for specific user feeds
+  async findAllFeedsByUserId() {
+    try {
+      const feeds = await this.prisma.feeds.findMany({
+        // take: size,
+        // skip: (page - 1) * size,
+        where: {
+          status: true,
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+        select: {
+          name: true,
+          description: true,
+          likes: true,
+          location: true,
+          user: {
+            select: {
+              username: true,
+              avatar: true,
+            },
+          },
+          files: {
+            where: {
+              nota: false,
+            },
+            select: {
+              file_name: true,
+            },
+          },
         },
       });
       return {
@@ -91,35 +143,104 @@ export class FeedsService {
     }
   }
 
-  // find all feeds by user_id
-  async findAllFeedsByUserId() {
+  async findOneFeedByUUID(feed_uuid: string) {
     try {
-      const feeds = await this.prisma.feeds.findMany({
+      const feed = await this.prisma.feeds.findUnique({
         where: {
-          user_id: this.req.user.id,
-          status: true,
-        },
-        orderBy: {
-          created_at: 'desc',
+          uuid: feed_uuid,
         },
         select: {
-          id: true,
-          uuid: true,
+          name: true,
+          description: true,
+          likes: true,
+          location: true,
           user: {
             select: {
-              id: true,
-              uuid: true,
               username: true,
+              avatar: true,
             },
           },
-          created_at: true,
-          updated_at: true,
+          files: {
+            where: {
+              nota: false,
+            },
+            select: {
+              file_name: true,
+            },
+          },
         },
       });
+      if (!feed) {
+        throw new Error('NOT_FOUND-Feed not found');
+      }
       return {
         status: 200,
-        data: feeds,
-        message: `Success get feeds`,
+        data: feed,
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
+
+  private async findFeedOwner(feed_uuid: string) {
+    const feedOwner = await this.prisma.feeds.findFirst({
+      where: {
+        uuid: feed_uuid,
+      },
+      select: { user: { select: { uuid: true } } },
+    });
+    const isFeedOwner = feedOwner.user.uuid === this.req.user.uuid;
+
+    if (!feedOwner) {
+      throw new Error('NOT_FOUND-Feed not found');
+    }
+
+    if (!isFeedOwner) {
+      throw new Error(
+        'UNAUTHORIZED-You are not authorized to update this feed',
+      );
+    }
+    return true;
+  }
+
+  async updateFeedStatusByUUID(feed_uuid: string) {
+    try {
+      const feed = await this.prisma.feeds.update({
+        where: {
+          uuid: feed_uuid,
+        },
+        data: {
+          status: false,
+        },
+      });
+      if (!feed) {
+        throw new Error('NOT_FOUND-Feed not found');
+      }
+      return {
+        status: 200,
+        message: 'Feed deleted successfully',
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
+
+  async updateFeedDataByUUID(feed_uuid: string, data: any) {
+    try {
+      await this.findFeedOwner(feed_uuid);
+
+      const updateFeed = await this.prisma.feeds.update({
+        where: {
+          uuid: feed_uuid,
+        },
+        data,
+      });
+      if (!updateFeed) {
+        throw new Error('NOT_FOUND-Feed not found');
+      }
+      return {
+        status: 200,
+        message: 'Feed updated successfully',
       };
     } catch (error) {
       return this.errorService.mappingError(error);

@@ -74,6 +74,11 @@ export class ErrorService {
           this.errorData.error.code = error[0];
           this.errorData.error.message = error[1];
           break;
+        case 'UNAUTHORIZED':
+          this.errorData.statusCode = HttpStatus.UNAUTHORIZED;
+          this.errorData.error.code = error[0];
+          this.errorData.error.message = error[1];
+          break;
 
         default:
           this.errorData.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;

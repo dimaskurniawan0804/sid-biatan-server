@@ -8,4 +8,5 @@ export class CreateFeedDto {
   description: string;
   location: string;
   organaizer: string;
+  status: boolean;
 }

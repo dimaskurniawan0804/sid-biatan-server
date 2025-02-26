@@ -8,6 +8,9 @@ import {
   // Delete,
   UseGuards,
   Query,
+  Param,
+  Patch,
+  Put,
 } from '@nestjs/common';
 import { FeedsService } from './feeds.service';
 import { CreateFeedDto } from './dto/create-feed.dto';
@@ -32,6 +35,27 @@ export class FeedsController {
   @Get('/user')
   findByUserId() {
     return this.feedsService.findAllFeedsByUserId();
+  }
+
+  @UseGuards(new UserGuard())
+  @Get(':uuid')
+  findByFeedUUID(@Param('uuid') uuid: string) {
+    return this.feedsService.findOneFeedByUUID(uuid);
+  }
+
+  @UseGuards(new UserGuard())
+  @Patch(':uuid')
+  updateFeedStatus(@Param('uuid') uuid: string) {
+    return this.feedsService.updateFeedStatusByUUID(uuid);
+  }
+
+  @UseGuards(new UserGuard())
+  @Put(':uuid')
+  updateFeed(
+    @Param('uuid') uuid: string,
+    @Body() createFeedDto: CreateFeedDto,
+  ) {
+    return this.feedsService.updateFeedDataByUUID(uuid, createFeedDto);
   }
 
   // @Get(':id')
