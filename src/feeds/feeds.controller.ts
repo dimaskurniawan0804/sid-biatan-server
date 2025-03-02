@@ -20,7 +20,7 @@ import { UserGuard } from 'src/middleware/users.guard';
 export class FeedsController {
   constructor(private readonly feedsService: FeedsService) {}
 
-  @UseGuards(new UserGuard())
+  @UseGuards(new UserGuard([1, 2]))
   @Post()
   create(@Body() createFeedDto: CreateFeedDto) {
     return this.feedsService.create(createFeedDto);

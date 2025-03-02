@@ -29,12 +29,12 @@ export class UsersController {
   }
 
   @Post('/guest')
-  createGuest(@Body() createGuestDto: CreateGUestDto) {
+  async createGuest(@Body() createGuestDto: CreateGUestDto) {
     const dto = {
       ...createGuestDto,
       role_id: 3,
     };
-    return this.usersService.createUser(dto);
+    return await this.usersService.createUser(dto);
   }
 
   @Post('/auth')

@@ -1,92 +1,100 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
-export interface errorShape {
-  statusCode: number | string;
+export interface ErrorShape {
+  statusCode: number;
   error: {
     code: string;
     message: string;
   };
 }
+
 @Injectable()
 export class ErrorService {
-  errorData = {
-    statusCode: 0,
-    error: {
-      code: '',
-      message: '',
-    },
-  };
-  async mappingError(err: any) {
-    if (err instanceof PrismaClientKnownRequestError) {
-      console.log('<<< Error Prisma Client >>> ', err);
-      switch (err.code) {
-        case 'P2002':
-          this.errorData.statusCode = 400;
-          this.errorData.error.code = 'BAD-REQUEST';
-          this.errorData.error.message = `duplicate value at table (${err.meta.modelName}) column (${err.meta.target}). Value must be unique`;
-          break;
-        default:
-          this.errorData.statusCode = 999;
-          this.errorData.error.code = 'UNHANDLED ERROR';
-          this.errorData.error.message = 'UNHANDLED ERROR ' + err.message;
-          break;
-      }
-    } else {
-      if (!err.message) {
-        this.errorData.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-        this.errorData.error.code = 'UNHANDLED ERROR';
-        this.errorData.error.message = err;
-        return this.errorData;
-      }
-      /**
-       * error[0] is code
-       * error[1] is message
-       */
-      const error = err.message.split('-');
-      switch (error[0]) {
-        case 'NOT_FOUND':
-          this.errorData.statusCode = HttpStatus.NOT_FOUND;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-          break;
-        case 'BAD_REQUEST':
-          this.errorData.statusCode = HttpStatus.BAD_REQUEST;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-          break;
-        case 'FORBIDDEN':
-          this.errorData.statusCode = 403;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-          break;
-        case 'CONFLICT':
-          this.errorData.statusCode = HttpStatus.CONFLICT;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-        case 'LOGIN_FAILED':
-          this.errorData.statusCode = HttpStatus.BAD_REQUEST;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-          break;
-        case 'PROCESS_FAILED':
-          this.errorData.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-          break;
-        case 'UNAUTHORIZED':
-          this.errorData.statusCode = HttpStatus.UNAUTHORIZED;
-          this.errorData.error.code = error[0];
-          this.errorData.error.message = error[1];
-          break;
+  mappingError(err: any): never {
+    let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+    let errorResponse: ErrorShape = {
+      statusCode,
+      error: {
+        code: 'UNHANDLED_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    };
 
+    // ✅ Handle Prisma Errors
+    if (err instanceof PrismaClientKnownRequestError) {
+      console.log('<<< Error Prisma Client >>>', err);
+      switch (err.code) {
+        case 'P2002': // Unique constraint failed
+          statusCode = HttpStatus.BAD_REQUEST;
+          errorResponse = {
+            statusCode,
+            error: {
+              code: 'BAD-REQUEST',
+              message: `Duplicate value at table (${err.meta?.modelName}) column (${err.meta?.target}). Value must be unique`,
+            },
+          };
+          break;
         default:
-          this.errorData.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-          this.errorData.error.code = 'UNHANDLED ERROR';
-          this.errorData.error.message = 'UNHANDLED ERROR - ' + error[1];
+          statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+          errorResponse = {
+            statusCode,
+            error: {
+              code: 'UNHANDLED_PRISMA_ERROR',
+              message: `Unhandled Prisma error - ${err.message}`,
+            },
+          };
           break;
       }
     }
-    return this.errorData;
+    // ✅ Handle Generic Errors
+    else {
+      if (!err.message || typeof err.message !== 'string') {
+        errorResponse = {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: {
+            code: 'MALFORMED_ERROR',
+            message: 'An error occurred, but no valid message was provided',
+          },
+        };
+        throw new HttpException(errorResponse, statusCode);
+      }
+
+      const errorParts = err.message.split('-');
+      if (errorParts.length < 2) {
+        errorResponse = {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: {
+            code: 'MALFORMED_ERROR',
+            message: 'An error occurred, but it is not properly formatted',
+          },
+        };
+        throw new HttpException(errorResponse, statusCode);
+      }
+
+      const [errorCode, errorMessage] = errorParts.map((part) => part.trim());
+
+      const errorMapping: Record<string, number> = {
+        NOT_FOUND: HttpStatus.NOT_FOUND,
+        BAD_REQUEST: HttpStatus.BAD_REQUEST,
+        FORBIDDEN: HttpStatus.FORBIDDEN,
+        CONFLICT: HttpStatus.CONFLICT,
+        LOGIN_FAILED: HttpStatus.BAD_REQUEST,
+        PROCESS_FAILED: HttpStatus.INTERNAL_SERVER_ERROR,
+        UNAUTHORIZED: HttpStatus.UNAUTHORIZED,
+      };
+
+      statusCode = errorMapping[errorCode] || HttpStatus.INTERNAL_SERVER_ERROR;
+
+      errorResponse = {
+        statusCode,
+        error: {
+          code: errorCode,
+          message: errorMessage,
+        },
+      };
+    }
+
+    throw new HttpException(errorResponse, statusCode); // ✅ Always throw the error
   }
 }

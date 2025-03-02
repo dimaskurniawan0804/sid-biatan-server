@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class LocalOnlyMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
-    const allowedHosts = ['localhost']; // Add your domain here
+    const allowedHosts = ['localhost', 'http://localhost:5173']; // Add your domain here
     const hostname = req.hostname;
 
     if (process.env.NODE_ENV === 'development') {

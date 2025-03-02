@@ -29,7 +29,7 @@ export class FilesController {
     FilesInterceptor('files', 10, {
       storage: diskStorage({
         destination:
-          '/Users/dimaskurniawan/Documents/alek/multer-files/sid-biatan', // Development
+          '/Users/dimaskurniawan/Documents/alek/sid-biatan-lempake/yaha/sid-we/public/uploads',
         // destination: '/www/wwwroot/uploads', // VPS
         filename: (req, file, cb) => {
           try {

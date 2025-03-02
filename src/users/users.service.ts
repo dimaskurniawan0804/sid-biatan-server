@@ -64,7 +64,6 @@ export class UsersService {
         message: `Registraion with username : ${createUserDto.username} success`,
       };
     } catch (error) {
-      console.log(error);
       return this.errorService.mappingError(error);
     }
   }
