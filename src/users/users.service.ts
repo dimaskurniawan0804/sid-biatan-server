@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDTO } from './dto/login-dto';
 import { REQUEST } from '@nestjs/core';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -110,10 +111,54 @@ export class UsersService {
     }
   }
 
-  // findAll() {
-  //yaha
-  //   return `This action returns all users`;
-  // }
+  async findAll() {
+    try {
+      const users = await this.prisma.users.findMany({
+        where: {
+          role_id: {
+            not: 3,
+          },
+        },
+        select: {
+          uuid: true,
+          username: true,
+          status: true,
+        },
+      });
+      return {
+        status: 200,
+        data: users,
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
+
+  async updateUser(dto: UpdateUserDto) {
+    try {
+      dto.password = await hash(dto.password.toLowerCase(), 12);
+      const updateUser = await this.prisma.users.update({
+        where: {
+          uuid: dto.uuid,
+        },
+        data: {
+          username: dto.username,
+          password: dto.password,
+          status: dto.status,
+        },
+      });
+      if (!updateUser) {
+        throw new Error('PROCESS_FAILED-Failed to update user');
+      }
+      return {
+        status: 200,
+        data: updateUser,
+        message: `Update user with username : ${updateUser.username} success`,
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
 
   // findOne(id: number) {
   //   return `This action returns a #${id} user`;

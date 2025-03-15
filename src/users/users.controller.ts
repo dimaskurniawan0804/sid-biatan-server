@@ -1,9 +1,9 @@
 import {
   Controller,
-  // Get,
+  Get,
   Post,
   Body,
-  // Patch,
+  Put,
   // Param,
   // Delete,
   UseGuards,
@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CreateGUestDto } from './dto/create-guest.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UserGuard } from '../middleware/users.guard';
 import { LoginDTO } from './dto/login-dto';
 
@@ -42,10 +43,17 @@ export class UsersController {
     return this.usersService.login(dto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.usersService.findAll();
-  // }
+  @UseGuards(new UserGuard([1]))
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
+  }
+
+  @UseGuards(new UserGuard([1]))
+  @Put()
+  putUser(@Body() dto: UpdateUserDto) {
+    return this.usersService.updateUser(dto);
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {

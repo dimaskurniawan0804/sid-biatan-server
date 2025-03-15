@@ -50,7 +50,12 @@ export class FeedsService {
       if (!createFeed) {
         throw new Error('PROCESS_FAILED-Failed to create feed');
       }
-      return createFeed;
+      return {
+        status: 201,
+        data: {
+          feed_id: createFeed.id,
+        },
+      };
     } catch (error) {
       return this.errorService.mappingError(error);
     }
@@ -64,6 +69,9 @@ export class FeedsService {
         skip: (page - 1) * size,
         where: {
           status: true,
+          user: {
+            status: true,
+          },
         },
         orderBy: {
           created_at: 'desc',
@@ -103,11 +111,13 @@ export class FeedsService {
   // use for specific user feeds
   async findAllFeedsByUserId() {
     try {
+      const { id } = await this.findUser();
+
       const feeds = await this.prisma.feeds.findMany({
         // take: size,
         // skip: (page - 1) * size,
         where: {
-          status: true,
+          user_id: id,
         },
         orderBy: {
           created_at: 'desc',
@@ -117,12 +127,7 @@ export class FeedsService {
           description: true,
           likes: true,
           location: true,
-          user: {
-            select: {
-              username: true,
-              avatar: true,
-            },
-          },
+          uuid: true,
           files: {
             where: {
               nota: false,
@@ -133,6 +138,9 @@ export class FeedsService {
           },
         },
       });
+      if (!feeds.length) {
+        throw new Error('NOT_FOUND-User has no feeds');
+      }
       return {
         status: 200,
         data: feeds,
@@ -150,16 +158,12 @@ export class FeedsService {
           uuid: feed_uuid,
         },
         select: {
+          uuid: true,
           name: true,
           description: true,
           likes: true,
           location: true,
-          user: {
-            select: {
-              username: true,
-              avatar: true,
-            },
-          },
+          status: true,
           files: {
             where: {
               nota: false,
@@ -241,6 +245,40 @@ export class FeedsService {
       return {
         status: 200,
         message: 'Feed updated successfully',
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
+
+  async findAllFeedsByYearadnUserId(year: string, uuid: string) {
+    try {
+      const { id } = await this.prisma.users.findUnique({
+        where: {
+          uuid,
+        },
+      });
+      const feeds = await this.prisma.feeds.findMany({
+        where: {
+          user_id: id,
+          created_at: {
+            gte: new Date(`${year}-01-01T00:00:00.000Z`), // ISO format with UTC
+            lt: new Date(`${parseInt(year) + 1}-01-01T00:00:00.000Z`), // ISO format with UTC
+          },
+        },
+        select: {
+          name: true,
+          description: true,
+          likes: true,
+          location: true,
+          uuid: true,
+          files: true,
+        },
+      });
+      return {
+        status: 200,
+        data: feeds,
+        message: `Success get feeds`,
       };
     } catch (error) {
       return this.errorService.mappingError(error);
