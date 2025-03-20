@@ -62,6 +62,35 @@ export class FilesService {
     }
   }
 
+  async findNotaByFeedId(feed_id: any) {
+    const { id } = await this.prisma.feeds.findFirst({
+      where: {
+        uuid: feed_id,
+      },
+      select: {
+        id: true,
+      },
+    });
+    try {
+      const files = await this.prisma.files.findMany({
+        where: {
+          feed_id: id,
+          nota: true,
+        },
+        select: {
+          file_name: true,
+        },
+      });
+      return {
+        status: 200,
+        feed_id: id,
+        data: files,
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
+
   // findAll() {
   //   return `This action returns all files`;
   // }

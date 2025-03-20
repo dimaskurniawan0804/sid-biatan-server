@@ -1,6 +1,6 @@
 import {
   Controller,
-  // Get,
+  Get,
   Post,
   // Body,
   UseGuards,
@@ -11,7 +11,7 @@ import {
   // Patch,
   UploadedFiles,
   // Patch,
-  // Param,
+  Param,
   // Delete,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
@@ -62,7 +62,7 @@ export class FilesController {
     FilesInterceptor('files', 10, {
       storage: diskStorage({
         destination:
-          '/Users/dimaskurniawan/Documents/alek/multer-files/sid-biatan', // Development
+          '/Users/dimaskurniawan/Documents/alek/sid-biatan-lempake/yaha/sid-we/public/uploads', // Development
         // destination: '/www/wwwroot/uploads', // VPS
         filename: (req, file, cb) => {
           try {
@@ -91,6 +91,11 @@ export class FilesController {
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     return this.filesService.createNota(files, req.body.feed_id);
+  }
+
+  @Get('/nota/:feed_uuid')
+  async fetchNotaByFeedId(@Param('feed_uuid') feed_uuid: string) {
+    return this.filesService.findNotaByFeedId(feed_uuid);
   }
 
   // @Post()

@@ -40,8 +40,6 @@ export class FeedsController {
   @UseGuards(new UserGuard([1]))
   @Get('/export/:year/:uuid')
   findExportData(@Param('year') year: string, @Param('uuid') uuid: string) {
-    console.log('year', year);
-    console.log('uuid', uuid);
     return this.feedsService.findAllFeedsByYearadnUserId(year, uuid);
   }
 

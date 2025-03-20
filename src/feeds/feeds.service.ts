@@ -269,15 +269,48 @@ export class FeedsService {
         select: {
           name: true,
           description: true,
-          likes: true,
           location: true,
-          uuid: true,
-          files: true,
+          files: {
+            select: {
+              file_name: true,
+            },
+          },
+          user: {
+            select: {
+              username: true,
+            },
+          },
+          created_at: true,
         },
       });
+
+      const splitFiles = (data) => {
+        return data.map((item) => {
+          const fileGroups = {
+            files: [],
+            notas: [],
+          };
+
+          item.files.forEach((file) => {
+            if (file.file_name.startsWith('nota*')) {
+              fileGroups.notas.push(file);
+            } else {
+              fileGroups.files.push(file);
+            }
+          });
+
+          return {
+            ...item,
+            files: fileGroups.files,
+            notas: fileGroups.notas,
+          };
+        });
+      };
+      const result = splitFiles(feeds);
+
       return {
         status: 200,
-        data: feeds,
+        data: result,
         message: `Success get feeds`,
       };
     } catch (error) {
