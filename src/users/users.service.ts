@@ -160,15 +160,25 @@ export class UsersService {
     }
   }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
-
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} user`;
-  // }
+  async updateAvatar(avatar: any) {
+    try {
+      const updateUser = await this.prisma.users.update({
+        where: {
+          uuid: this.req.user.uuid,
+        },
+        data: {
+          avatar: avatar.filename,
+        },
+      });
+      if (!updateUser) {
+        throw new Error('PROCESS_FAILED-Failed to update user');
+      }
+      return {
+        status: 200,
+        message: `Update user with username : ${updateUser.username} success`,
+      };
+    } catch (error) {
+      return this.errorService.mappingError(error);
+    }
+  }
 }

@@ -79,6 +79,11 @@ export class FilesService {
         },
         select: {
           file_name: true,
+          feed: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
       return {

@@ -43,7 +43,6 @@ export class FeedsService {
       status: true,
     };
     try {
-      // console.log(data);
       const createFeed = await this.prisma.feeds.create({
         data,
       });
@@ -292,7 +291,7 @@ export class FeedsService {
           };
 
           item.files.forEach((file) => {
-            if (file.file_name.startsWith('nota*')) {
+            if (file.file_name.startsWith('nota')) {
               fileGroups.notas.push(file);
             } else {
               fileGroups.files.push(file);

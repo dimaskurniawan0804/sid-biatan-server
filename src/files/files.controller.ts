@@ -28,9 +28,8 @@ export class FilesController {
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: diskStorage({
-        // destination:
-        //   '/Users/dimaskurniawan/Documents/alek/sid-biatan-lempake/yaha/sid-we/public/uploads',
-        destination: process.env.STATIC_FILES_PATH, // VPS
+        destination: process.env.STATIC_FILES_PATH,
+        // destination: '/www/wwwroot/uploads/', // VPS
         filename: (req, file, cb) => {
           try {
             const now = new Date();
@@ -61,9 +60,8 @@ export class FilesController {
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: diskStorage({
-        // destination:
-        // '/Users/dimaskurniawan/Documents/alek/sid-biatan-lempake/yaha/sid-we/public/uploads', // Development
-        destination: process.env.STATIC_FILES_PATH, // VPS
+        destination: process.env.STATIC_FILES_PATH,
+        // destination: '/www/wwwroot/uploads/', // VPS
         filename: (req, file, cb) => {
           try {
             const now = new Date();
