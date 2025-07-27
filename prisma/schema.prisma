@@ -48,6 +48,8 @@ model feeds {
 model files {
   id         Int      @id @default(autoincrement())
   file_name  String   @unique
+  file_id    String   @unique
+  file_url   String
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
   nota       Boolean? @default(false)

@@ -12,7 +12,9 @@ export class FilesService {
     const data = [];
     createFileDto.map((file) => {
       data.push({
-        file_name: file.filename,
+        file_name: file.name,
+        file_url: file.url,
+        file_id: file.fileId,
         created_at: new Date(),
         updated_at: new Date(),
         nota: false,
@@ -28,7 +30,10 @@ export class FilesService {
       }
       return {
         status: 201,
-        message: 'Files uploaded successfully',
+        message: {
+          message: 'Files uploaded successfully',
+          data: createFileDto,
+        },
       };
     } catch (error) {
       return this.errorService.mappingError(error);
@@ -39,7 +44,9 @@ export class FilesService {
     const data = [];
     createFileDto.map((file) => {
       data.push({
-        file_name: file.filename,
+        file_name: file.name,
+        file_url: file.url,
+        file_id: file.fileId,
         created_at: new Date(),
         updated_at: new Date(),
         nota: true,
@@ -55,7 +62,10 @@ export class FilesService {
       }
       return {
         status: 201,
-        message: 'Nota uploaded successfully',
+        message: {
+          message: 'Nota uploaded successfully',
+          data: createFileDto,
+        },
       };
     } catch (error) {
       return this.errorService.mappingError(error);
@@ -78,7 +88,7 @@ export class FilesService {
           nota: true,
         },
         select: {
-          file_name: true,
+          file_url: true,
           feed: {
             select: {
               name: true,

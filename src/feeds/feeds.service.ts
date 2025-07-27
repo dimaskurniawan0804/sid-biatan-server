@@ -93,6 +93,8 @@ export class FeedsService {
             },
             select: {
               file_name: true,
+              file_url: true,
+              file_id: true,
             },
           },
         },
@@ -133,6 +135,8 @@ export class FeedsService {
             },
             select: {
               file_name: true,
+              file_url: true,
+              file_id: true,
             },
           },
         },
@@ -169,6 +173,8 @@ export class FeedsService {
             },
             select: {
               file_name: true,
+              file_url: true,
+              file_id: true,
             },
           },
         },
@@ -272,6 +278,8 @@ export class FeedsService {
           files: {
             select: {
               file_name: true,
+              file_url: true,
+              file_id: true,
             },
           },
           user: {

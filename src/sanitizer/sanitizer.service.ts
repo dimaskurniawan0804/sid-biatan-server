@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import * as DOMPurify from 'dompurify';
+// import * as DOMPurify from 'dompurify';
+import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 
 @Injectable()
 export class SanitizerService {
   private window = new JSDOM('').window;
-  private DOMPurify = DOMPurify(
+  private DOMPurify = createDOMPurify(
     this.window as unknown as Window & typeof globalThis,
   );
 

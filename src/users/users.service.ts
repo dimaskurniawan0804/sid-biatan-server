@@ -106,7 +106,7 @@ export class UsersService {
         throw new Error('LOGIN_FAILED-Invalid username or password');
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       return this.errorService.mappingError(error);
     }
   }

@@ -23,7 +23,6 @@ export class ErrorService {
 
     // ✅ Handle Prisma Errors
     if (err instanceof PrismaClientKnownRequestError) {
-      console.log('<<< Error Prisma Client >>>', err);
       switch (err.code) {
         case 'P2002': // Unique constraint failed
           statusCode = HttpStatus.BAD_REQUEST;
