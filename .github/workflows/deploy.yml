@@ -1,4 +1,4 @@
-name: Deploy NestJS to VPS
+name: Deploy to VPS
 
 on:
   push:
@@ -7,44 +7,56 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to VPS
     runs-on: ubuntu-latest
 
-    env:
-      PROJECT_DIR: /www/wwwroot/sid-biatan/nest/sid-biatan-server
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to VPS via SSH
+      - name: Deploy via SSH
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            export NVM_DIR=~/.nvm
-            source ~/.bashrc
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
 
-            if [ ! -d $PROJECT_DIR ]; then
+            # Lokasi direktori project di VPS
+            PROJECT_DIR=/root/sid-biatan-server
+
+            # Buat direktori jika belum ada
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "Creating project directory..."
               mkdir -p $PROJECT_DIR
-              git clone git@github.com:${{ github.repository }} $PROJECT_DIR
+              cd $PROJECT_DIR
+              git clone git@github.com:${{ github.repository }} .
+            else
+              echo "Directory exists, pulling latest code..."
+              cd $PROJECT_DIR
+              git pull origin main
             fi
 
-            cd $PROJECT_DIR
-            git pull origin main
+            # Salin .env dari secret
+            echo "${{ secrets.ENV_FILE }}" > $PROJECT_DIR/.env
 
-            echo "${{ secrets.ENV_FILE }}" > .env
-
-            source ~/.bashrc
-            source ~/.profile
-
+            # Install dependencies
             pnpm install
+
+            # Build project
             pnpm build
 
-            pm2 start dist/src/main.js --name sid-biatan-server || pm2 restart sid-biatan-server
+            # Jalankan PM2 jika belum pernah dijalankan
+            if ! pm2 list | grep -q "sid-biatan-server"; then
+              echo "Starting new PM2 process..."
+              pm2 start dist/src/main.js --name sid-biatan-server
+            else
+              echo "Reloading existing PM2 process..."
+              pm2 reload sid-biatan-server
+            fi
+
+            # Simpan konfigurasi PM2 agar jalan otomatis saat reboot
+            pm2 save
+            pm2 startup
           EOF
