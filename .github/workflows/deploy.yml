@@ -1,4 +1,4 @@
-name: Deploy NestJS to VPS
+name: Deploy NestJS to VPS via SSH
 
 on:
   push:
@@ -10,39 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.5.4
         with:
-          node-version: '20'
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: Copy files to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            mkdir -p ~/deploy-temp
+          EOF
 
-      - name: Install dependencies
-        run: pnpm install
-        working-directory: nest/sid-biatan-server
+          rsync -avz --delete ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/deploy-temp
 
-      - name: Generate Prisma client
-        run: pnpm prisma generate
-        working-directory: nest/sid-biatan-server
+      - name: Deploy on VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            # Move to the correct directory
+            mkdir -p /www/wwwroot/sid-biatan/nest
+            rm -rf /www/wwwroot/sid-biatan/nest/sid-biatan-server
+            mv ~/deploy-temp /www/wwwroot/sid-biatan/nest/sid-biatan-server
 
-      - name: Build project
-        run: pnpm build
-        working-directory: nest/sid-biatan-server
-
-      - name: Deploy to VPS using SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
             cd /www/wwwroot/sid-biatan/nest/sid-biatan-server
-            git pull origin main
-            pnpm install
-            pnpm prisma generate
+
+            # Load environment
+            echo "${{ secrets.ENV_FILE }}" > .env
+
+            # Install deps & build
+            source ~/.bashrc
+            pnpm install --frozen-lockfile
             pnpm build
-            pm2 restart sid-biatan-server || pm2 start dist/main.js --name sid-biatan-server
+
+            # Restart with PM2
+            pm2 delete sid-biatan-server || true
+            pm2 start dist/src/main.js --name sid-biatan-server
+          EOF
