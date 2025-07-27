@@ -1,50 +1,62 @@
-name: Deploy NestJS to VPS via SSH
+name: Deploy to VPS
 
 on:
   push:
     branches:
-      - main
+      - main # Ganti jika kamu pakai branch lain
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout source
         uses: actions/checkout@v3
 
-      - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.5.4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Copy files to VPS
+      - name: Deploy to VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            mkdir -p ~/deploy-temp
-          EOF
+            set -e
 
-          rsync -avz --delete ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/deploy-temp
-
-      - name: Deploy on VPS
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            # Move to the correct directory
-            mkdir -p /www/wwwroot/sid-biatan/nest
-            rm -rf /www/wwwroot/sid-biatan/nest/sid-biatan-server
-            mv ~/deploy-temp /www/wwwroot/sid-biatan/nest/sid-biatan-server
-
+            # Lokasi project di VPS
             cd /www/wwwroot/sid-biatan/nest/sid-biatan-server
 
-            # Load environment
+            echo "📦 Pulling latest code"
+            git pull origin main
+
+            echo "📁 Saving .env file"
             echo "${{ secrets.ENV_FILE }}" > .env
 
-            # Install deps & build
-            source ~/.bashrc
+            echo "🔧 Installing dependencies"
             pnpm install --frozen-lockfile
+
+            echo "🔌 Generating Prisma Client"
+            pnpm prisma generate
+
+            # (Optional) Run Prisma Migrate (only if safe)
+            # pnpm prisma migrate deploy
+
+            echo "🏗️ Building project"
             pnpm build
 
-            # Restart with PM2
-            pm2 delete sid-biatan-server || true
-            pm2 start dist/src/main.js --name sid-biatan-server
+            echo "🚀 Restarting app with PM2"
+            pm2 restart sid-biatan || pm2 start dist/main.js --name sid-biatan
           EOF
