@@ -1,0 +1,59 @@
+name: Deploy NestJS to VPS via SSH
+
+on:
+  push:
+    branches:
+      - main # Ganti kalau pakai branch lain
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8 # atau versi kamu
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18 # atau versi kamu
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
+            cd /www/wwwroot/sid-biatan/nest
+
+            # Pull latest code
+            git pull origin main
+
+            # Load ENV
+            echo "${{ secrets.ENV_FILE }}" > .env
+
+            # Install deps & build
+            pnpm install
+            pnpm build
+
+            # Start or reload with PM2
+            pm2 startOrReload ecosystem.config.js --env production
+          EOF
