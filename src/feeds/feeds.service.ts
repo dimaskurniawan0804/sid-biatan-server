@@ -30,7 +30,6 @@ export class FeedsService {
 
   async create(createFeedDto: CreateFeedDto) {
     const { id: user_id } = await this.findUser();
-    console.log('user_id', user_id);
     createFeedDto.description = this.sanitizerService.sanitize(
       createFeedDto.description,
     );

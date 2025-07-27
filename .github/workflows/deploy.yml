@@ -37,7 +37,7 @@ jobs:
             cd /www/wwwroot/sid-biatan/nest/sid-biatan-server
 
             # Load environment
-            echo "${{ secrets.ENV_FILE }}" > .env
+            echo -e "${{ secrets.ENV_FILE }}" > .env
 
             # Install deps & generate prisma client
             source ~/.bashrc
