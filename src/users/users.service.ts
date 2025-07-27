@@ -6,7 +6,8 @@ import { REQUEST } from '@nestjs/core';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ErrorService } from 'src/error/error.service';
-import { compare, hash } from 'bcrypt';
+// import { compare, hash } from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { jwtConfig } from 'src/config/jwt.config';
 
@@ -43,7 +44,7 @@ export class UsersService {
 
   async createUser(createUserDto: CreateUserDto) {
     try {
-      createUserDto.password = await hash(
+      createUserDto.password = await bcrypt.hash(
         createUserDto.password.toLowerCase(),
         12,
       );
@@ -85,7 +86,7 @@ export class UsersService {
         throw new Error('NOT_FOUND-User not found');
       }
 
-      const comparePassword = await compare(
+      const comparePassword = await bcrypt.compare(
         loginDto.password.toLocaleLowerCase(),
         findUser.password,
       );
@@ -136,7 +137,7 @@ export class UsersService {
 
   async updateUser(dto: UpdateUserDto) {
     try {
-      dto.password = await hash(dto.password.toLowerCase(), 12);
+      dto.password = await bcrypt.hash(dto.password.toLowerCase(), 12);
       const updateUser = await this.prisma.users.update({
         where: {
           uuid: dto.uuid,

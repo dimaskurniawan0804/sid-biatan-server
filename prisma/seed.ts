@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { hash } from 'bcrypt';
+import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -19,7 +19,7 @@ async function main() {
       ],
     });
 
-    const pass = await hash('admin', 12);
+    const pass = await bcrypt.hash('admin', 12);
 
     await prisma.users.create({
       data: {
