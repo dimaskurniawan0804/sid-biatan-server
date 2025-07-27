@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy NestJS to VPS via SSH
 
 on:
   push:
@@ -10,53 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.1
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy via SSH
+      - name: Copy files to VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e
+            mkdir -p ~/deploy-temp
+          EOF
 
-            # Lokasi direktori project di VPS
-            PROJECT_DIR=/root/sid-biatan-server
+          rsync -avz --delete ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/deploy-temp
 
-            # Buat direktori jika belum ada
-            if [ ! -d "$PROJECT_DIR" ]; then
-              echo "Creating project directory..."
-              mkdir -p $PROJECT_DIR
-              cd $PROJECT_DIR
-              git clone git@github.com:${{ github.repository }} .
-            else
-              echo "Directory exists, pulling latest code..."
-              cd $PROJECT_DIR
-              git pull origin main
-            fi
+      - name: Deploy on VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            # Move to the correct directory
+            mkdir -p /www/wwwroot/sid-biatan/nest
+            rm -rf /www/wwwroot/sid-biatan/nest/sid-biatan-server
+            mv ~/deploy-temp /www/wwwroot/sid-biatan/nest/sid-biatan-server
 
-            # Salin .env dari secret
-            echo "${{ secrets.ENV_FILE }}" > $PROJECT_DIR/.env
+            cd /www/wwwroot/sid-biatan/nest/sid-biatan-server
 
-            # Install dependencies
-            pnpm install
+            # Load environment
+            echo "${{ secrets.ENV_FILE }}" > .env
 
-            # Build project
+            # Install deps & build
+            source ~/.bashrc
+            pnpm install --frozen-lockfile
             pnpm build
 
-            # Jalankan PM2 jika belum pernah dijalankan
-            if ! pm2 list | grep -q "sid-biatan-server"; then
-              echo "Starting new PM2 process..."
-              pm2 start dist/src/main.js --name sid-biatan-server
-            else
-              echo "Reloading existing PM2 process..."
-              pm2 reload sid-biatan-server
-            fi
-
-            # Simpan konfigurasi PM2 agar jalan otomatis saat reboot
-            pm2 save
-            pm2 startup
+            # Restart with PM2
+            pm2 delete sid-biatan-server || true
+            pm2 start dist/src/main.js --name sid-biatan-server
           EOF
