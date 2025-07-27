@@ -1,62 +1,50 @@
-name: Deploy to VPS
+name: Deploy NestJS to VPS
 
 on:
   push:
     branches:
-      - main # Ganti jika kamu pakai branch lain
+      - main
+
+defaults:
+  run:
+    working-directory: nest/sid-biatan-server
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: ⬇️ Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+      - name: 📦 Install pnpm
+        run: npm install -g pnpm
 
-      - name: Install dependencies
+      - name: 📥 Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Add SSH key
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: ⚙️ Prisma Generate
+        run: pnpm prisma generate
+
+      - name: 🏗️ Build Project
+        run: pnpm build
+
+      - name: 🚀 Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy to VPS
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e
-
-            # Lokasi project di VPS
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
             cd /www/wwwroot/sid-biatan/nest/sid-biatan-server
-
-            echo "📦 Pulling latest code"
             git pull origin main
-
-            echo "📁 Saving .env file"
             echo "${{ secrets.ENV_FILE }}" > .env
-
-            echo "🔧 Installing dependencies"
             pnpm install --frozen-lockfile
-
-            echo "🔌 Generating Prisma Client"
             pnpm prisma generate
-
-            # (Optional) Run Prisma Migrate (only if safe)
-            # pnpm prisma migrate deploy
-
-            echo "🏗️ Building project"
             pnpm build
-
-            echo "🚀 Restarting app with PM2"
-            pm2 restart sid-biatan || pm2 start dist/main.js --name sid-biatan
-          EOF
+            pm2 restart sid-biatan-server || pm2 start dist/main.js --name sid-biatan-server
