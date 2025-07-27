@@ -39,9 +39,12 @@ jobs:
             # Load environment
             echo "${{ secrets.ENV_FILE }}" > .env
 
-            # Install deps & build
+            # Install deps & generate prisma client
             source ~/.bashrc
             pnpm install --frozen-lockfile
+            pnpm exec prisma generate
+
+            # Build
             pnpm build
 
             # Restart with PM2
